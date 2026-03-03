@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Louisiana Behavioral Health Pipeline</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0f1724;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+        header {
+            text-align: center;
+            padding: 40px 20px 20px;
+        }
+        header h1 {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: 2.2rem;
+            color: #C9A84C;
+            letter-spacing: 1px;
+        }
+        header p {
+            color: #8a9bb5;
+            margin-top: 8px;
+            font-size: 0.95rem;
+        }
+
+        /* Map Section */
+        #map {
+            width: 100%;
+            height: 500px;
+            border-top: 1px solid #2a3a55;
+            border-bottom: 1px solid #2a3a55;
+        }
+        .leaflet-popup-content-wrapper {
+            background: #1a2744;
+            color: #e0e0e0;
+            border: 1px solid #C9A84C;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+        }
+        .leaflet-popup-tip { background: #1a2744; }
+        .leaflet-popup-content {
+            margin: 10px 14px;
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+        .leaflet-popup-content .popup-name {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: 1rem;
+            color: #C9A84C;
+            margin-bottom: 4px;
+        }
+        .leaflet-popup-content .popup-city {
+            color: #8a9bb5;
+            font-size: 0.8rem;
+        }
+        .leaflet-popup-close-button { color: #C9A84C !important; }
+
+        /* Cards Grid */
+        .cards-section {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px 30px 60px;
+        }
+        .cards-section h2 {
+            font-family: 'Playfair Display', Georgia, serif;
+            color: #C9A84C;
+            font-size: 1.4rem;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+        .card {
+            background: linear-gradient(145deg, #1a2744, #1e2d4a);
+            border: 1px solid #2a3a55;
+            border-radius: 12px;
+            padding: 24px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+        .card:hover {
+            border-color: #C9A84C;
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(201, 168, 76, 0.15);
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 14px;
+        }
+        .card-name {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: 1.25rem;
+            color: #fff;
+            line-height: 1.3;
+        }
+        .card-date {
+            font-size: 0.75rem;
+            color: #C9A84C;
+            background: rgba(201, 168, 76, 0.12);
+            padding: 4px 10px;
+            border-radius: 20px;
+            white-space: nowrap;
+            flex-shrink: 0;
+            margin-left: 12px;
+        }
+        .card-meta {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+        }
+        .tag {
+            font-size: 0.72rem;
+            padding: 3px 10px;
+            border-radius: 20px;
+            background: rgba(100, 140, 200, 0.15);
+            color: #7ea8d4;
+            border: 1px solid rgba(100, 140, 200, 0.2);
+        }
+        .card-notes {
+            font-size: 0.85rem;
+            color: #9ab0cc;
+            line-height: 1.6;
+        }
+        .card-notes strong {
+            color: #c0d0e0;
+        }
+        .card-notes ul {
+            margin: 6px 0 6px 18px;
+        }
+        .card-notes li {
+            margin-bottom: 4px;
+        }
+        .card-source {
+            margin-top: 14px;
+            font-size: 0.7rem;
+            color: #5a6e88;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .placeholder-note {
+            color: #5a6e88;
+            font-style: italic;
+            font-size: 0.85rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .cards-grid { grid-template-columns: 1fr; }
+            header h1 { font-size: 1.6rem; }
+            .map-container { width: 100%; }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<header>
+    <h1>Louisiana Behavioral Health Pipeline</h1>
+    <p>Bradford Health Services &mdash; Intro Call Notes &amp; Deal Tracker</p>
+</header>
+
+<div id="map"></div>
+
+<div class="cards-section">
+    <h2>Intro Call Notes</h2>
+    <div class="cards-grid">
+
+        <!-- Second Chances -->
+        <a id="card-second-chances" class="card" href="https://otter.ai/u/fuwqWiokt_qM4Ih9y7P45LI6-oI" target="_blank">
+            <div class="card-header">
+                <div class="card-name">Second Chances</div>
+                <div class="card-date">Jan 21, 2026</div>
+            </div>
+            <div class="card-meta">
+                <span class="tag">Substance Abuse</span>
+                <span class="tag">Multi-location</span>
+                <span class="tag">Louisiana</span>
+            </div>
+            <div class="card-notes">
+                <ul>
+                    <li>Owned by <strong>Full Horn Investments</strong> (holding co. - heavy equipment rental background, sold National Tank to Atlas Copco)</li>
+                    <li>Opened 2020, ~5 years in operation with capital expansions</li>
+                    <li>Expanding from <strong>56 to 80 beds</strong>, currently at <strong>60-65% occupancy</strong></li>
+                    <li>Original plan was to open additional facilities in LA and TX, but pivoting toward a partnership/sale</li>
+                    <li>Philosophy: scalable, rinse-and-repeat model in different markets</li>
+                    <li>Bradford expressed strong interest; agreed to proceed with <strong>NDA and data request</strong> for due diligence</li>
+                    <li>Target ~1 month to reach LOI decision after initial materials</li>
+                </ul>
+            </div>
+            <div class="card-source">Source: Otter &bull; 49 min</div>
+        </a>
+
+        <!-- The Grove Recovery -->
+        <a id="card-grove-recovery" class="card" href="https://otter.ai/u/SAKYtnPoZWHFdZjieLvI5PgfC0o" target="_blank">
+            <div class="card-header">
+                <div class="card-name">The Grove Recovery</div>
+                <div class="card-date">Jan 21, 2026</div>
+            </div>
+            <div class="card-meta">
+                <span class="tag">Residential</span>
+                <span class="tag">Detox + IOP</span>
+                <span class="tag">Medicaid</span>
+            </div>
+            <div class="card-notes">
+                <ul>
+                    <li><strong>150-bed residential facility</strong>, operational for 4 years</li>
+                    <li>Offers medical detox, primary treatment, and IOP</li>
+                    <li><strong>75% Medicaid clients</strong> with a 25% increase in rates</li>
+                    <li>Owner Cody has 25+ years in the industry, 15 in private pay before opening The Grove</li>
+                    <li>Purchased an existing IOP (called "the grove") to expedite licensing and contracts</li>
+                    <li>12-step based primary treatment, also helps people from Celebrate Recovery</li>
+                    <li>Bradford discussed acquisition potential; factors: lease terms, referral base, market opportunities</li>
+                    <li>Agreed to proceed with <strong>NDA and data request</strong> (financials, census, payer mix, property/rent)</li>
+                </ul>
+            </div>
+            <div class="card-source">Source: Otter &bull; 37 min</div>
+        </a>
+
+        <!-- Serenity Treatment Center -->
+        <a id="card-serenity-treatment" class="card" href="https://otter.ai/u/oJ3jCTi2bpE-ep5O5pSv_76c6U4" target="_blank">
+            <div class="card-header">
+                <div class="card-name">Serenity Treatment Center</div>
+                <div class="card-date">Feb 9, 2026</div>
+            </div>
+            <div class="card-meta">
+                <span class="tag">Medicaid + Commercial</span>
+                <span class="tag">88 Beds</span>
+                <span class="tag">Baton Rouge</span>
+            </div>
+            <div class="card-notes">
+                <ul>
+                    <li><strong>Howie</strong> (CEO) manages operations; owner <strong>Aria</strong> is the primary decision-maker</li>
+                    <li><strong>88 active beds</strong> in Baton Rouge across <strong>3 buildings</strong>; $7-8M capital investment to date</li>
+                    <li>Medicaid and commercial payer mix; <strong>AmBetter pays $720/day</strong></li>
+                    <li>Operations net owner <strong>$150-200K/month</strong> in cash; prior valuation referenced at <strong>$14-15M</strong></li>
+                    <li>Baton Rouge market is competitive; census fluctuates, especially around holidays</li>
+                    <li>Growth plans: expanding outpatient services and potentially moving into rural areas</li>
+                    <li>Owner is not eager to sell &mdash; requires an offer he "can't turn down"</li>
+                    <li>Next steps: <strong>NDA and financial review</strong>, then on-site visit (end of Feb / early March)</li>
+                </ul>
+            </div>
+            <div class="card-source">Source: Otter &bull; 41 min</div>
+        </a>
+
+        <!-- Sanctuary Louisiana -->
+        <a id="card-sanctuary" class="card" href="https://otter.ai/u/j-xsNhbjZhLR6CkntNde8bu7TII" target="_blank">
+            <div class="card-header">
+                <div class="card-name">Sanctuary Louisiana</div>
+                <div class="card-date">Feb 9, 2026</div>
+            </div>
+            <div class="card-meta">
+                <span class="tag">Judicial Referral</span>
+                <span class="tag">Work Integration</span>
+                <span class="tag">Co-occurring</span>
+            </div>
+            <div class="card-notes">
+                <ul>
+                    <li>Judicial referral center: substance use and <strong>co-occurring mental health</strong> treatment</li>
+                    <li><strong>28-day (3.5) program</strong> and <strong>90-day (3.1) program</strong></li>
+                    <li><strong>61% success rate</strong></li>
+                    <li>Work integration program: clients transition to work while maintaining Medicaid benefits</li>
+                    <li>Bradford interested in acquiring/partnering, particularly in <strong>expanding services to include detox</strong></li>
+                    <li>Next steps: send non-binding LOI and NDA, basic info request (financials, rent, census, payer mix)</li>
+                    <li>Evaluate fit for Bradford's work-integration model; schedule site visit</li>
+                </ul>
+            </div>
+            <div class="card-source">Source: Otter &bull; 27 min</div>
+        </a>
+
+        <!-- Recovery Now / Longbranch -->
+        <a id="card-recovery-now" class="card" href="#" onclick="return false;">
+            <div class="card-header">
+                <div class="card-name">Recovery Now / Longbranch</div>
+                <div class="card-date">Dec 5, 2025</div>
+            </div>
+            <div class="card-meta">
+                <span class="tag">Residential</span>
+                <span class="tag">Commercial + VA</span>
+                <span class="tag">Multi-state</span>
+            </div>
+            <div class="card-notes">
+                <ul>
+                    <li><strong>Mike</strong> runs the platform; acquired Longbranch Recovery 2 years ago outside New Orleans</li>
+                    <li><strong>32 beds expanding to 57</strong> (construction complete, awaiting state inspection)</li>
+                    <li>In-network with Blue Cross LA; negotiated <strong>90% rate increase</strong> from $389 &rarr; $650 &rarr; <strong>$750/day</strong></li>
+                    <li>VA population: <strong>7-10 beds</strong>; was previously over-reliant on VA (17-18 of 32 beds), now diversifying</li>
+                    <li><strong>NOAA sober living</strong>: 27 beds + PHP/IOP on campus, mostly vets, census ~22</li>
+                    <li><strong>Eating disorder facility</strong>: 17 residential beds, going in-network, breakeven at 5 patients</li>
+                    <li><strong>Georgia facility</strong>: 24-bed detox, currently out of network, plan to double beds and move in-network</li>
+                    <li>LOI on <strong>5-location acquisition</strong> (TN, GA, FL panhandle) &mdash; 86 beds, close date Feb 2</li>
+                    <li>Running ~<strong>$13M EBITDA</strong>, projected to ~<strong>$30M</strong> with all expansions/acquisitions online</li>
+                    <li>Not transactional right now but highly complimentary to Bradford's footprint; wants to stay connected</li>
+                </ul>
+            </div>
+            <div class="card-source">Source: Limitless transcript</div>
+        </a>
+
+        <!-- Woodlake Center — NOT INTERESTED -->
+        <a id="card-woodlake" class="card" href="#" onclick="return false;" style="opacity: 0.45; border-color: #5a3030;">
+            <div class="card-header">
+                <div class="card-name">Woodlake Center</div>
+                <div class="card-date">Nov 11, 2025</div>
+            </div>
+            <div class="card-meta">
+                <span class="tag" style="background: rgba(200,60,60,0.15); color: #e07070; border-color: rgba(200,60,60,0.3);">Not Interested</span>
+                <span class="tag">279 Beds LA</span>
+                <span class="tag">Medicaid Heavy</span>
+            </div>
+            <div class="card-notes">
+                <ul>
+                    <li><strong>Randy</strong>, owner &mdash; contractor by trade, 71 years old, 5 children work with him</li>
+                    <li><strong>279 residential beds</strong> in Louisiana, ~<strong>600 total</strong> across multiple states</li>
+                    <li>Full continuum: 3.7 medical detox + residential treatment</li>
+                    <li>Payer mix: <strong>55-60% Medicaid</strong> (LA is a 70% Medicaid state); also commercial, all in-network</li>
+                    <li>Owns real estate on larger facilities; one smaller facility operated under parish/county license</li>
+                    <li>Parish-built facility swung from -$1.5M/yr loss to +$350K/yr profit under Woodlake management</li>
+                    <li>Average length of stay pressure: was 70-80 days, now pushing to get into the 20s</li>
+                    <li>Randy mentioned visiting Nashville to meet Chuck in person; 32 years in recovery</li>
+                </ul>
+            </div>
+            <div class="card-source">Source: Limitless transcript</div>
+        </a>
+
+        <!-- Nola Detox & Residential -->
+        <a id="card-nola-detox" class="card" href="#" onclick="return false;">
+            <div class="card-header">
+                <div class="card-name">Nola Detox &amp; Residential</div>
+                <div class="card-date">Dec 4, 2025</div>
+            </div>
+            <div class="card-meta">
+                <span class="tag">Full Continuum</span>
+                <span class="tag">78 Beds</span>
+                <span class="tag">New Orleans</span>
+            </div>
+            <div class="card-notes">
+                <ul>
+                    <li><strong>Dan</strong> (CEO, healthcare background) and <strong>Chris</strong> (hospitality background, Copeland's restaurant family) &mdash; both in long-term recovery</li>
+                    <li>Dan was former CEO of <strong>Townsend Recovery</strong> (sold to American Addiction Centers 2016), then started MAT clinics network sold to <strong>Baymark Health</strong></li>
+                    <li><strong>48-bed residential</strong> in New Orleans at 100% occupancy with wait list; plus <strong>30 new beds</strong> opened 6 weeks prior (78 total)</li>
+                    <li>Full continuum: detox &rarr; residential &rarr; PHP &rarr; IOP &rarr; sober living &rarr; MAT services</li>
+                    <li>Payer mix: commercial, Medicaid, and VA &mdash; new facility designed profitable even at 100% Medicaid</li>
+                    <li>Exclusive partnership with <strong>Tulane University</strong> training fellows on-site</li>
+                    <li>Strong direct-to-consumer marketing machine; no traditional sales reps; 75% residential-to-IOP conversion</li>
+                    <li>Own sober living houses + office building (IOP/corporate); lease the two treatment centers</li>
+                    <li>Bradford proposed <strong>NDA and data request</strong>; would keep NOLA Detox brand name intact</li>
+                </ul>
+            </div>
+            <div class="card-source">Source: Limitless transcript</div>
+        </a>
+
+        <!-- Uprising Addiction Center — NO SHOW -->
+        <a id="card-uprising" class="card" href="#" onclick="return false;" style="opacity: 0.5; border-color: #5a4a30;">
+            <div class="card-header">
+                <div class="card-name">Uprising Addiction Center</div>
+                <div class="card-date">No Show</div>
+            </div>
+            <div class="card-meta">
+                <span class="tag" style="background: rgba(200,160,60,0.15); color: #d4a84c; border-color: rgba(200,160,60,0.3);">No Show</span>
+                <span class="tag">61 Beds</span>
+                <span class="tag">Shreveport</span>
+            </div>
+            <div class="card-notes">
+                <ul>
+                    <li>18-acre campus in <strong>Shreveport, LA</strong>; <strong>61 total beds</strong> (26 detox, 35 residential)</li>
+                    <li>Levels of care: medical detox, residential, PHP, IOP</li>
+                    <li>Trauma-informed, 12-step/spirituality-based, gender-specific housing</li>
+                    <li>Agreed to intro call but <strong>never showed up</strong></li>
+                </ul>
+            </div>
+            <div class="card-source">Status: Agreed to call &mdash; did not attend</div>
+        </a>
+
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    const map = L.map('map', {
+        center: [31.0, -91.5],
+        zoom: 7,
+        zoomControl: true,
+        scrollWheelZoom: true
+    });
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap &copy; CARTO',
+        maxZoom: 19
+    }).addTo(map);
+
+    const goldIcon = L.divIcon({
+        className: 'custom-marker',
+        html: '<div style="width:14px;height:14px;background:#C9A84C;border:2px solid #fff;border-radius:50%;box-shadow:0 0 10px rgba(201,168,76,0.6);"></div>',
+        iconSize: [14, 14],
+        iconAnchor: [7, 7],
+        popupAnchor: [0, -10]
+    });
+
+    const redIcon = L.divIcon({
+        className: 'custom-marker',
+        html: '<div style="width:14px;height:14px;background:#8b3a3a;border:2px solid #c06060;border-radius:50%;box-shadow:0 0 8px rgba(139,58,58,0.4);"></div>',
+        iconSize: [14, 14],
+        iconAnchor: [7, 7],
+        popupAnchor: [0, -10]
+    });
+
+    const orangeIcon = L.divIcon({
+        className: 'custom-marker',
+        html: '<div style="width:14px;height:14px;background:#b08030;border:2px solid #d4a84c;border-radius:50%;box-shadow:0 0 8px rgba(176,128,48,0.4);"></div>',
+        iconSize: [14, 14],
+        iconAnchor: [7, 7],
+        popupAnchor: [0, -10]
+    });
+
+    const companies = [
+        { name: 'Second Chances', city: 'Rayville, LA', lat: 32.4774, lng: -91.7546, cardId: 'card-second-chances', status: 'active', url: 'https://secondchancesla.com' },
+        { name: 'The Grove Recovery', city: 'Sorrento, LA', lat: 30.1835, lng: -90.8593, cardId: 'card-grove-recovery', status: 'active', url: 'https://thegroverecovery.com' },
+        { name: 'Serenity Treatment Center', city: 'Baton Rouge, LA', lat: 30.467, lng: -91.147, cardId: 'card-serenity-treatment', status: 'active', url: 'https://theserenitycenterla.com' },
+        { name: 'Sanctuary Louisiana', city: 'Lacassine, LA', lat: 30.2363, lng: -92.9618, cardId: 'card-sanctuary', status: 'active', url: 'https://sanctuarylouisiana.com' },
+        { name: 'Recovery Now / Longbranch', city: 'Abita Springs, LA', lat: 30.4749, lng: -90.0401, cardId: 'card-recovery-now', status: 'active', url: 'https://longbranchrecovery.com' },
+        { name: 'Woodlake Center', city: 'Ethel, LA', lat: 30.8085, lng: -91.1018, cardId: 'card-woodlake', status: 'dead', url: 'https://woodlakecenter.com' },
+        { name: 'Nola Detox & Residential', city: 'New Orleans, LA', lat: 29.9244, lng: -90.0158, cardId: 'card-nola-detox', status: 'active', url: 'https://noladetox.com' },
+        { name: 'Uprising Addiction Center', city: 'Shreveport, LA', lat: 32.4406, lng: -93.8694, cardId: 'card-uprising', status: 'noshow', url: 'https://uprisingcenter.com' }
+    ];
+
+    companies.forEach(c => {
+        const icon = c.status === 'dead' ? redIcon : c.status === 'noshow' ? orangeIcon : goldIcon;
+        const marker = L.marker([c.lat, c.lng], { icon }).addTo(map);
+        marker.bindPopup(
+            '<div class="popup-name">' + c.name + '</div>' +
+            '<div class="popup-city">' + c.city + '</div>' +
+            '<a href="' + c.url + '" target="_blank" style="color:#C9A84C;font-size:0.75rem;text-decoration:none;display:inline-block;margin-top:6px;">Visit Website &rarr;</a>'
+        );
+        let closeTimeout;
+        marker.on('mouseover', function() {
+            clearTimeout(closeTimeout);
+            this.openPopup();
+            const popupEl = this.getPopup()._container;
+            if (popupEl) {
+                popupEl.onmouseenter = () => clearTimeout(closeTimeout);
+                popupEl.onmouseleave = () => { closeTimeout = setTimeout(() => marker.closePopup(), 300); };
+            }
+        });
+        marker.on('mouseout', function() {
+            closeTimeout = setTimeout(() => marker.closePopup(), 300);
+        });
+        marker.on('click', () => {
+            const card = document.getElementById(c.cardId);
+            if (card) {
+                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                card.style.borderColor = '#C9A84C';
+                card.style.boxShadow = '0 0 20px rgba(201,168,76,0.3)';
+                setTimeout(() => {
+                    card.style.borderColor = '';
+                    card.style.boxShadow = '';
+                }, 2000);
+            }
+        });
+    });
+</script>
+</body>
+</html>
