@@ -476,17 +476,8 @@
         marker.on('mouseout', function() {
             closeTimeout = setTimeout(() => marker.closePopup(), 300);
         });
-        marker.on('click', () => {
-            const card = document.getElementById(c.cardId);
-            if (card) {
-                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                card.style.borderColor = '#C9A84C';
-                card.style.boxShadow = '0 0 20px rgba(201,168,76,0.3)';
-                setTimeout(() => {
-                    card.style.borderColor = '';
-                    card.style.boxShadow = '';
-                }, 2000);
-            }
+        marker.on('click', function() {
+            this.openPopup();
         });
     });
 </script>
